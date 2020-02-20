@@ -6,8 +6,8 @@
 #define	FILE_MODE	(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
 int main(int argc, char **argv) {
-    if (argc < 4) {
-        printf("Not enough arguments");
+    if (argc < 2) {
+        printf("You need to specify byffer length");
         return 1;
     }
     int bufferSize;
@@ -16,21 +16,11 @@ int main(int argc, char **argv) {
         return 1;
     }
     void* buffer = malloc(bufferSize);
-    close(0);
-    if(open(argv[2], O_RDONLY) == -1) {
-        printf("File not exist");
-        return 1;
-    }
-    close(1);
-    open(argv[3], O_WRONLY | O_CREAT, FILE_MODE);
 
     int bytes_num;
-    while ((bytes_num = read(0, buffer, bufferSize)) > 0)  {
-        write(1, buffer, bytes_num);
+    while ((bytes_num = read(STDIN_FILENO, buffer, bufferSize)) > 0)  {
+        write(STDOUT_FILENO, buffer, bytes_num);
     }
-
-    close(0);
-    close(1);
 
     return 0;
 }
