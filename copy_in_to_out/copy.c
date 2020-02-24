@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <zconf.h>
-#include <fcntl.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        printf("You need to specify byffer length");
+        printf("You need to specify buffer length");
         return 1;
     }
     int bufferSize;
