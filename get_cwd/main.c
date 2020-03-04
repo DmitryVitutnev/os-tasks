@@ -20,26 +20,28 @@ int get_cwd(char* buffer, size_t size) {
     __ino_t _root_ino = _stat->st_ino;
     __dev_t _root_dev = _stat->st_dev;
 
+    char* homedir;
+    homedir = getpwuid(getuid())->pw_dir;
+    stat(homedir, _stat);
+    __ino_t _home_ino = _stat->st_ino;
+    __dev_t _home_dev = _stat->st_dev;
+
     stat(".", _stat);
     __ino_t _start_ino = _stat->st_ino;
     __dev_t _start_dev = _stat->st_dev;
-    int _link_count = -1;
+    int _link_count = 0;
 
     struct node* _cur_node = NULL;
     __ino_t _cur_ino;
     __dev_t _cur_dev;
     char _str[MAX_FILE_NAME] = "";
     while(1) {
-        stat(".", _stat);
-        _cur_ino = _stat->st_ino;
-        _cur_dev = _stat->st_dev;
-        if(_cur_ino == _root_ino && _cur_dev == _root_dev) {
-            break;
-        }
-        DIR* _dir = opendir("..");
+
+
+        DIR* _dir = opendir(".");
         struct dirent* _dirent;
         while((_dirent = readdir(_dir)) != NULL) {
-            strcpy(_str, "../");
+            strcpy(_str, "");
             strcat(_str, _dirent->d_name);
             stat(_str, _stat);
             if(_stat->st_ino == _cur_ino && _stat->st_dev == _cur_dev) {
@@ -49,8 +51,19 @@ int get_cwd(char* buffer, size_t size) {
                 _cur_node = _node;
             }
             if(_stat->st_ino == _start_ino && _stat->st_dev == _start_dev) {
-                _link_count++;
+                lstat(_str, _stat);
+                if(_stat->st_ino != _start_ino || _stat->st_dev != _start_dev) {
+                    _link_count++;
+                }
             }
+
+        }
+
+        stat(".", _stat);
+        _cur_ino = _stat->st_ino;
+        _cur_dev = _stat->st_dev;
+        if(_cur_ino == _root_ino && _cur_dev == _root_dev) {
+            break;
         }
         chdir("..");
     }
@@ -69,6 +82,7 @@ int get_cwd(char* buffer, size_t size) {
 
     return _link_count;
 
+
 }
 
 
@@ -78,14 +92,12 @@ int get_cwd_sandbox(char* buffer, size_t size) {
     stat("/", _stat);
     __ino_t _root_ino = _stat->st_ino;
     __dev_t _root_dev = _stat->st_dev;
-    //printf("%ld\n",_root_ino);
 
     char* homedir;
     homedir = getpwuid(getuid())->pw_dir;
     stat(homedir, _stat);
     __ino_t _home_ino = _stat->st_ino;
     __dev_t _home_dev = _stat->st_dev;
-    //printf("%ld\n",_home_ino);
 
     stat(".", _stat);
     __ino_t _start_ino = _stat->st_ino;
@@ -103,9 +115,7 @@ int get_cwd_sandbox(char* buffer, size_t size) {
         struct dirent* _dirent;
         while((_dirent = readdir(_dir)) != NULL) {
             strcpy(_str, "");
-            //printf("%s\n",_dirent->d_name);
             strcat(_str, _dirent->d_name);
-            //printf("%s ",_dirent->d_name);
             stat(_str, _stat);
             if(_stat->st_ino == _cur_ino && _stat->st_dev == _cur_dev) {
                 struct node* _node = malloc(sizeof(struct node));
@@ -117,13 +127,11 @@ int get_cwd_sandbox(char* buffer, size_t size) {
                 lstat(_str, _stat);
                 if(_stat->st_ino != _start_ino || _stat->st_dev != _start_dev) {
                     _link_count++;
-                    //printf("%s ",_dirent->d_name);
                 }
             }
 
 
         }
-        //printf("\n");
 
         stat(".", _stat);
         _cur_ino = _stat->st_ino;
@@ -158,7 +166,7 @@ int main() {
     size_t BUFFER_SIZE = MAX_FILE_NAME;
     char* buffer = malloc(BUFFER_SIZE);
 
-    int link_count = get_cwd_sandbox(buffer, BUFFER_SIZE);
+    int link_count = get_cwd(buffer, BUFFER_SIZE);
     printf("%s\n", buffer);
     printf("%i links\n", link_count);
 
